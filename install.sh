@@ -7,9 +7,10 @@ set -e
 
 SRC="$(cd "$(dirname "$0")" && pwd)"
 
-# Install dependencies with whichever package manager is available
+# Install dependencies with whichever package manager is available.
+# Arch ships Electron as a system package; other distros fall back to the npm copy below.
 if command -v pacman >/dev/null 2>&1; then
-    pacman -S --needed --noconfirm openbox nodejs npm
+    pacman -S --needed --noconfirm openbox electron
 elif command -v apt-get >/dev/null 2>&1; then
     apt-get update && apt-get install -y openbox nodejs npm
 elif command -v dnf >/dev/null 2>&1; then
@@ -17,17 +18,24 @@ elif command -v dnf >/dev/null 2>&1; then
 elif command -v zypper >/dev/null 2>&1; then
     zypper --non-interactive install openbox nodejs npm
 else
-    echo "Unknown package manager. Please install openbox, nodejs and npm yourself."
-    command -v openbox >/dev/null 2>&1 && command -v npm >/dev/null 2>&1 || exit 1
+    echo "Unknown package manager. Please install openbox and electron (or nodejs + npm) yourself."
+    command -v openbox >/dev/null 2>&1 || exit 1
 fi
 
 # Copy the project to /opt/wiidesk (without git data and old node_modules)
 mkdir -p /opt/wiidesk
 tar -C "$SRC" --exclude=.git --exclude=node_modules -cf - . | tar -C /opt/wiidesk -xf -
-(cd /opt/wiidesk && npm install)
-# Newer npm versions block package install scripts, so Electron's binary would never be downloaded.
-# Run its installer explicitly.
-(cd /opt/wiidesk && node node_modules/electron/install.js)
+
+# Without a system Electron, install it locally through npm
+if ! command -v electron >/dev/null 2>&1; then
+    (cd /opt/wiidesk && npm install)
+    # Newer npm versions block package install scripts, so run Electron's installer explicitly
+    (cd /opt/wiidesk && node node_modules/electron/install.js)
+    if [ ! -x /opt/wiidesk/node_modules/electron/dist/electron ]; then
+        echo "Electron download failed. Install your distro's electron package or use a Node.js LTS version."
+        exit 1
+    fi
+fi
 
 # Register the session with the display manager (works for X11 sessions on all distros)
 install -Dm755 "$SRC/session/wiidesk-session" /usr/local/bin/wiidesk-session

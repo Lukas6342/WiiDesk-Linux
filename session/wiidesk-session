@@ -17,7 +17,13 @@ openbox &
 OB=$!
 
 cd /opt/wiidesk || exit 1
-./node_modules/.bin/electron .
+
+# Prefer the system Electron, fall back to the one installed through npm
+if command -v electron >/dev/null 2>&1; then
+    electron .
+else
+    ./node_modules/.bin/electron .
+fi
 
 # Electron exited -> stop the window manager so the session ends
 kill "$OB" 2>/dev/null
