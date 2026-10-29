@@ -12,7 +12,7 @@ function createWindow() {
         autoHideMenuBar: true,
         icon: path.join(__dirname, 'assets', 'favicon.png'),
         webPreferences: {
-            // Der Renderer nutzt require('electron') und require('fs') direkt (script.js, storage.js)
+            // The renderer calls require('electron') and require('fs') directly (script.js, storage.js)
             nodeIntegration: true,
             contextIsolation: false,
             autoplayPolicy: 'no-user-gesture-required'
@@ -22,10 +22,11 @@ function createWindow() {
     win.setMenu(null);
     win.loadFile(path.join(__dirname, 'index.html'));
 
+    // Lets the renderer pause/resume the background music
     win.on('blur', () => win.webContents.send('window-blur'));
     win.on('focus', () => win.webContents.send('window-focus'));
 
-    // Notausgang: Strg+Alt+Q beendet WiiDesk
+    // Emergency exit / logout: Ctrl+Alt+Q quits WiiDesk
     win.webContents.on('before-input-event', (e, input) => {
         if (input.type === 'keyDown' && input.control && input.alt && input.key.toLowerCase() === 'q') {
             app.quit();
@@ -35,10 +36,10 @@ function createWindow() {
     win.on('closed', () => { win = null; });
 }
 
-// App/Programm starten. target = Befehl, Pfad oder .desktop-Datei
+// Launch a program. target = shell command, executable path or .desktop file
 ipcMain.handle('launch', (e, target) => {
     return new Promise((resolve) => {
-        if (!target || typeof target !== 'string') return resolve({ ok: false, error: 'kein Ziel angegeben' });
+        if (!target || typeof target !== 'string') return resolve({ ok: false, error: 'no target given' });
 
         let cmd, args;
         if (target.endsWith('.desktop')) {
@@ -55,11 +56,11 @@ ipcMain.handle('launch', (e, target) => {
     });
 });
 
-// Website im Standardbrowser öffnen
+// Open a website in the default browser (http/https only)
 ipcMain.handle('open-site', async (e, url) => {
     try {
         const u = new URL(url);
-        if (u.protocol !== 'http:' && u.protocol !== 'https:') throw new Error('nur http(s) erlaubt');
+        if (u.protocol !== 'http:' && u.protocol !== 'https:') throw new Error('only http(s) allowed');
         await shell.openExternal(u.href);
         return { ok: true };
     } catch (err) {

@@ -1,7 +1,7 @@
 {
   "name": "wiidesk",
   "version": "1.0.0",
-  "description": "Wii Menu als Desktop-Oberfläche",
+  "description": "Wii Menu as a desktop shell",
   "main": "main.js",
   "license": "AGPL-3.0",
   "scripts": {
