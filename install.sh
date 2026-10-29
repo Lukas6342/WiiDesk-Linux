@@ -41,4 +41,4 @@ fi
 install -Dm755 "$SRC/session/wiidesk-session" /usr/local/bin/wiidesk-session
 install -Dm644 "$SRC/session/wiidesk.desktop" /usr/share/xsessions/wiidesk.desktop
 
-echo "Done. Log out and pick the 'WiiDesk' session in your login manager."
+echo "Done. Please pick the 'WiiDesk' session in your login manager."
