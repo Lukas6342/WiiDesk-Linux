@@ -25,6 +25,9 @@ fi
 mkdir -p /opt/wiidesk
 tar -C "$SRC" --exclude=.git --exclude=node_modules -cf - . | tar -C /opt/wiidesk -xf -
 (cd /opt/wiidesk && npm install)
+# Newer npm versions block package install scripts, so Electron's binary would never be downloaded.
+# Run its installer explicitly.
+(cd /opt/wiidesk && node node_modules/electron/install.js)
 
 # Register the session with the display manager (works for X11 sessions on all distros)
 install -Dm755 "$SRC/session/wiidesk-session" /usr/local/bin/wiidesk-session
