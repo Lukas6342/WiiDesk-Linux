@@ -1,0 +1,22 @@
+#!/bin/sh
+# WiiDesk Session: Openbox als Fenstermanager + WiiDesk (Electron) als Shell.
+# Beenden/Abmelden: Strg+Alt+Q
+
+LOG="$HOME/.wiidesk-session.log"
+exec >"$LOG" 2>&1
+
+# Eigener D-Bus-Session-Bus, falls der Login-Manager keinen mitbringt
+if [ -z "$DBUS_SESSION_BUS_ADDRESS" ] && command -v dbus-run-session >/dev/null 2>&1; then
+    exec dbus-run-session -- "$0"
+fi
+
+export XDG_CURRENT_DESKTOP=WiiDesk
+export XDG_SESSION_DESKTOP=WiiDesk
+
+openbox &
+OB=$!
+
+cd /opt/wiidesk || exit 1
+./node_modules/.bin/electron .
+
+kill "$OB" 2>/dev/null
