@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const { spawn } = require('child_process');
 const path = require('path');
+const { listApps } = require('./desktop-apps');
 
 let win = null;
 
@@ -36,25 +37,33 @@ function createWindow() {
     win.on('closed', () => { win = null; });
 }
 
-// Launch a program. target = shell command, executable path or .desktop file
-ipcMain.handle('launch', (e, target) => {
+// Start a detached process; resolves once it has spawned (or failed to)
+function run(cmd, args) {
     return new Promise((resolve) => {
-        if (!target || typeof target !== 'string') return resolve({ ok: false, error: 'no target given' });
-
-        let cmd, args;
-        if (target.endsWith('.desktop')) {
-            cmd = 'gtk-launch';
-            args = [path.basename(target, '.desktop')];
-        } else {
-            cmd = '/bin/sh';
-            args = ['-c', target];
-        }
-
         const child = spawn(cmd, args, { detached: true, stdio: 'ignore' });
-        child.once('error', (err) => resolve({ ok: false, error: err.message }));
+        child.once('error', (err) => resolve({ ok: false, error: err.message, code: err.code }));
         child.once('spawn', () => { child.unref(); resolve({ ok: true }); });
     });
+}
+
+// Launch a program. target = shell command, executable path or .desktop file
+ipcMain.handle('launch', async (e, target) => {
+    if (!target || typeof target !== 'string') return { ok: false, error: 'no target given' };
+
+    if (target.endsWith('.desktop')) {
+        // gio handles Exec field codes, Terminal=true and so on; gtk-launch is the fallback
+        const result = await run('gio', ['launch', target]);
+        if (result.ok || result.code !== 'ENOENT') return result;
+        return run('gtk-launch', [path.basename(target, '.desktop')]);
+    }
+    return run('/bin/sh', ['-c', target]);
 });
+
+// Installed applications, so the renderer can create a channel for each one
+ipcMain.handle('list-apps', (e, skipIconIds) => listApps(skipIconIds));
+
+// Log out: quitting WiiDesk ends the session (see session/wiidesk-session)
+ipcMain.handle('logout', () => { app.quit(); });
 
 // Open a website in the default browser (http/https only)
 ipcMain.handle('open-site', async (e, url) => {

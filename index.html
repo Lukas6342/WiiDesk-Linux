@@ -18,6 +18,7 @@
     <script src="js/homemenu.js"></script>
     <script src="js/storage.js"></script>
     <script src="js/config.js"></script>
+    <script src="js/apps.js"></script>
     <script src="js/audio.js"></script>
     <script src="js/channels.js"></script>
 
@@ -58,7 +59,13 @@
             $('.next').css('display', document.querySelectorAll('.ch-c').length > 1 ? 'flex' : 'none');
         }
 
-        window.addEventListener('load', renderMainMenuGrid);
+        window.addEventListener('load', function () {
+            renderMainMenuGrid();
+            // Add a channel for every installed app, then redraw if anything changed
+            syncInstalledApps().then(function (changed) {
+                if (changed) renderMainMenuGrid();
+            });
+        });
 
         startDateTime();
 
@@ -256,11 +263,11 @@
             <input type="text" id="cmTargetWebsite" placeholder="https://example.com" style="margin-top: 1vh;" />
             <div id="cmAppFields" style="display:none; margin-top: 1vh;">
                 <div class="cm-browse-row">
-                    <input type="text" id="cmAppId" placeholder="C:\Path\To\App.exe" />
+                    <input type="text" id="cmAppId" placeholder="firefox  or  /usr/bin/app" />
                     <button type="button" class="cm-btn secondary" id="cmBrowseApp">Browse...</button>
-                    <input type="file" id="cmAppBrowseFile" accept=".exe" style="display:none;" />
+                    <input type="file" id="cmAppBrowseFile" accept="*" style="display:none;" />
                 </div>
-                <p class="cm-note">Full path to the .exe on this PC.</p>
+                <p class="cm-note">Command or full path of the program.</p>
             </div>
 
             <div class="cm-modal-actions">
@@ -647,7 +654,7 @@
                     var icon = ch.customArt.icon
                         ? mediaTag(ch.customArt.icon, 'custom-art-icon')
                         : `<span class="custom-art-initial">${(ch.title || '?').charAt(0).toUpperCase()}</span>`;
-                    artHtml = `<div class="custom-art">${icon}</div>`;
+                    artHtml = `<div class="${isAppIcon(ch.customArt.icon) ? 'custom-art app-art' : 'custom-art'}">${icon}</div>`;
                 } else {
                     artHtml = `<iframe src="${ch.channelart}${ch.id}/channel.html" loading="lazy"></iframe>`;
                 }
@@ -701,6 +708,7 @@
         function cmRemoveChannelAt(index) {
             var ch = cmChannels[index];
             cmConfirm(`Remove "${ch.title}"?`, () => {
+                if (ch.autoApp) dismissApp(ch.id);
                 cmChannels.splice(index, 1);
                 cmPersist();
                 cmRenderGrid();
@@ -965,7 +973,7 @@
             var target = '';
             if (launchType === 'app') {
                 var appPath = document.getElementById('cmAppId').value.trim();
-                if (!appPath) { cmAlert('Please enter the path to the .exe.'); return; }
+                if (!appPath) { cmAlert('Please enter the command or path of the program.'); return; }
                 target = appPath;
             } else {
                 target = document.getElementById('cmTargetWebsite').value.trim();
@@ -1074,8 +1082,12 @@
         document.getElementById('cmResetDefaults').addEventListener('click', function() {
             cmConfirm('Reset all channels back to the defaults? This cannot be undone.', () => {
                 resetChannels(true);
+                clearDismissedApps();
                 cmChannels = userChannels.slice();
                 renderMainMenuGrid();
+                syncInstalledApps().then(function (changed) {
+                    if (changed) { cmChannels = userChannels.slice(); renderMainMenuGrid(); cmRenderGrid(); }
+                });
                 cmRenderGrid();
                 cmToast('Reset to defaults');
             });

@@ -45,6 +45,13 @@ function rm2() {
     }, 1500);
 }
 
+// Ends the desktop session (Electron quits, see session/wiidesk-session)
+function logOut() {
+    playSFX('returntomenu.mp3', userConfig.sfxVol);
+    setTimeout(() => {document.body.classList.add("fadeOut");}, 1000);
+    setTimeout(() => {window.electronIpc.invoke('logout');}, 1500);
+}
+
 function settingsIn() {
     playSFX('sidemenu.mp3', userConfig.sfxVol);
     setTimeout(() => {document.body.classList.add("fadeOut");}, 0);

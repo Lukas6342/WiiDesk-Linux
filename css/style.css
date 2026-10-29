@@ -506,6 +506,42 @@ a, button {
     text-shadow: 0 0.2vh 0.4vh rgba(0,0,0,0.15);
 }
 
+/* Channels created automatically for installed apps: Wii-style tile with the app icon centered */
+.ch-c .ch.occupied .custom-art.app-art,
+.cm-item .ch.occupied .custom-art.app-art {
+    background: linear-gradient(180deg, #ffffff 0%, #eef2f5 55%, #d6dee6 100%);
+}
+
+/* Soft gloss over the upper half, like the original channel tiles */
+.ch-c .ch.occupied .custom-art.app-art::before,
+.cm-item .ch.occupied .custom-art.app-art::before {
+    content: '';
+    position: absolute;
+    left: 0; right: 0; top: 0;
+    height: 48%;
+    background: linear-gradient(180deg, rgba(255,255,255,0.85), rgba(255,255,255,0.15));
+    pointer-events: none;
+}
+
+.ch-c .ch.occupied .custom-art.app-art .custom-art-icon,
+.cm-item .ch.occupied .custom-art.app-art .custom-art-icon {
+    width: auto;
+    height: 72%;
+    max-width: 55%;
+    object-fit: contain;
+    filter: drop-shadow(0 0.5vh 0.7vh rgba(0,0,0,0.28));
+}
+
+html.dark-theme .ch-c .ch.occupied .custom-art.app-art,
+html.dark-theme .cm-item .ch.occupied .custom-art.app-art {
+    background: linear-gradient(180deg, #4a5058 0%, #353a40 55%, #24282c 100%);
+}
+
+html.dark-theme .ch-c .ch.occupied .custom-art.app-art::before,
+html.dark-theme .cm-item .ch.occupied .custom-art.app-art::before {
+    background: linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0.02));
+}
+
 .ch-c .ch.occupied::after {
     position: absolute;
     inset: 0;

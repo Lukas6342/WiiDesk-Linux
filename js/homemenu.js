@@ -1,4 +1,18 @@
 
+// What the "Yes" button of the confirmation dialog does (return to menu or log out)
+var pendingAction = null;
+
+function confirmYes() {
+    if (pendingAction) pendingAction();
+}
+
+function openConfirmDialog(text, action) {
+    document.getElementById('confirmText').innerHTML = text;
+    pendingAction = action;
+    $(".returndialog").css("display", "flex");
+    playSFX('button-select-big.mp3', userConfig.sfxVol);
+}
+
 window.addEventListener("load", () => {
     document.body.insertAdjacentHTML("beforeend", `
         <div class="home-menu">
@@ -8,6 +22,7 @@ window.addEventListener("load", () => {
             </div>
             <div class="in-between">
                 <a class="buttonlike backtomenu" onmouseenter="playSFX('button-hover.mp3', userConfig.sfxVol)">Wii Menu</a>
+                <a class="buttonlike logout" onmouseenter="playSFX('button-hover.mp3', userConfig.sfxVol)">Log Out</a>
             </div>
             <div class="bar-bottom">
                 <img src="assets/remote.png" class="remote" />
@@ -36,12 +51,12 @@ window.addEventListener("load", () => {
         </div>
         <div class="returndialog">
             <div class="msgbox">
-                <div class="text">
+                <div class="text" id="confirmText">
                     Return to the Wii Menu?<br>
                     (Anything not saved will be lost.)
                 </div>
                 <div class="actions">
-                    <a onclick="rm2();" onmouseenter="playSFX('button-hover.mp3', userConfig.sfxVol)">Yes</a>
+                    <a onclick="confirmYes();" onmouseenter="playSFX('button-hover.mp3', userConfig.sfxVol)">Yes</a>
                     <a class="closedialog" onmouseenter="playSFX('button-hover.mp3', userConfig.sfxVol)" onclick="playSFX('button-cancel.mp3', userConfig.sfxVol)">No</a>
                 </div>
             </div>
@@ -97,8 +112,14 @@ window.addEventListener("load", () => {
     });
 
     $(".backtomenu").click(event => {
-        $(".returndialog").css("display", "flex");
-        playSFX('button-select-big.mp3', userConfig.sfxVol);
+        openConfirmDialog('Return to the Wii Menu?<br>(Anything not saved will be lost.)', rm2);
+    });
+
+    // Logging out only makes sense inside the desktop app
+    if (!window.electronIpc) $(".logout").hide();
+
+    $(".logout").click(event => {
+        openConfirmDialog('Log out of WiiDesk?<br>(Anything not saved will be lost.)', logOut);
     });
 
     $(".closedialog").click(event => {
