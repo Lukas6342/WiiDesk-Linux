@@ -16,6 +16,21 @@ export XDG_SESSION_DESKTOP=WiiDesk
 # GTK apps like Firefox can draw their own window buttons; ask them not to
 export GTK_CSD=0
 
+# Use only the primary monitor and switch all other screens off:
+# the Wii menu layout breaks as soon as a second monitor is active.
+# If no monitor is marked as primary, the first connected one is used.
+if command -v xrandr >/dev/null 2>&1; then
+    OUTPUTS=$(xrandr --query | awk '$2 == "connected" {print $1}')
+    PRIMARY=$(xrandr --query | awk '$2 == "connected" && $3 == "primary" {print $1}')
+    [ -n "$PRIMARY" ] || PRIMARY=$(echo "$OUTPUTS" | head -n 1)
+    if [ -n "$PRIMARY" ]; then
+        xrandr --output "$PRIMARY" --auto --primary --pos 0x0
+        for OUT in $OUTPUTS; do
+            [ "$OUT" = "$PRIMARY" ] || xrandr --output "$OUT" --off
+        done
+    fi
+fi
+
 openbox --config-file /opt/wiidesk/session/openbox-rc.xml &
 OB=$!
 

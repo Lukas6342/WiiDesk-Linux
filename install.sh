@@ -10,13 +10,13 @@ SRC="$(cd "$(dirname "$0")" && pwd)"
 # Install dependencies with whichever package manager is available.
 # Arch ships Electron as a system package; other distros fall back to the npm copy below.
 if command -v pacman >/dev/null 2>&1; then
-    pacman -S --needed --noconfirm openbox electron
+    pacman -S --needed --noconfirm openbox electron xorg-xrandr
 elif command -v apt-get >/dev/null 2>&1; then
-    apt-get update && apt-get install -y openbox nodejs npm
+    apt-get update && apt-get install -y openbox nodejs npm x11-xserver-utils
 elif command -v dnf >/dev/null 2>&1; then
-    dnf install -y openbox nodejs npm
+    dnf install -y openbox nodejs npm xrandr
 elif command -v zypper >/dev/null 2>&1; then
-    zypper --non-interactive install openbox nodejs npm
+    zypper --non-interactive install openbox nodejs npm xrandr
 else
     echo "Unknown package manager. Please install openbox and electron (or nodejs + npm) yourself."
     command -v openbox >/dev/null 2>&1 || exit 1
