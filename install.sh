@@ -22,6 +22,24 @@ else
     command -v openbox >/dev/null 2>&1 || exit 1
 fi
 
+# Wii-style password dialog for system prompts (polkit agent): needs Python with GObject and the
+# polkit typelibs. Optional: without them WiiDesk still works, but password prompts of other
+# programs are not shown.
+install_polkit_agent_deps() {
+    if command -v pacman >/dev/null 2>&1; then
+        pacman -S --needed --noconfirm python-gobject polkit
+    elif command -v apt-get >/dev/null 2>&1; then
+        apt-get install -y python3-gi gir1.2-polkit-1.0
+    elif command -v dnf >/dev/null 2>&1; then
+        dnf install -y python3-gobject polkit-libs
+    elif command -v zypper >/dev/null 2>&1; then
+        zypper --non-interactive install python3-gobject typelib-1_0-Polkit-1_0
+    else
+        return 1
+    fi
+}
+install_polkit_agent_deps || echo "Could not install the polkit agent dependencies; password prompts of other programs will not be shown."
+
 # Copy the project to /opt/wiidesk (without git data and old node_modules)
 mkdir -p /opt/wiidesk
 tar -C "$SRC" --exclude=.git --exclude=node_modules -cf - . | tar -C /opt/wiidesk -xf -

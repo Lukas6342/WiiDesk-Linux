@@ -52,6 +52,18 @@ function logOut() {
     setTimeout(() => {window.electronIpc.invoke('logout');}, 1500);
 }
 
+// Restart, shut down or suspend the computer (see the 'power' handler in main.js)
+function powerAction(kind) {
+    window.electronIpc.invoke('power', kind).then(function (result) {
+        if (!result.ok) {
+            openMessageDialog("Couldn't do that.<br>(" + result.error + ")");
+        } else if (kind !== 'suspend') {
+            playSFX('returntomenu.mp3', userConfig.sfxVol);
+            document.body.classList.add("fadeOut");
+        }
+    });
+}
+
 function settingsIn() {
     playSFX('sidemenu.mp3', userConfig.sfxVol);
     setTimeout(() => {document.body.classList.add("fadeOut");}, 0);

@@ -902,6 +902,60 @@ body:has(.main-menu.ch-trans-on) .ch-selection {
     right: -4.9vw;
 }
 
+/* Power sub menu: smaller buttons stacked below "Log Out", drawn over the free space
+   so Wii Menu and Log Out stay on one line.
+   --pu is a length unit that follows the smaller screen side, so it also fits ultra-wide screens. */
+.home-menu .in-between .power-wrap {
+    --pu: min(1vw, 1.75vh);
+    position: relative;
+    display: flex;
+}
+
+.home-menu .in-between .power-sub {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: calc(var(--pu) * 0.6);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: calc(var(--pu) * 0.5);
+}
+
+/* Same proportions as the big buttons: total height = height + padding-top,
+   end caps are half as wide as the button is tall */
+.home-menu .in-between .power-sub a {
+    padding-top: calc(var(--pu) * 0.9);
+    width: calc(var(--pu) * 7.5);
+    height: calc(var(--pu) * 2.3);
+    font-size: calc(var(--pu) * 1);
+}
+
+.home-menu .in-between .power-sub a::before {
+    width: calc(var(--pu) * 1.6);
+    left: calc(var(--pu) * -1.42);
+}
+
+.home-menu .in-between .power-sub a::after {
+    width: calc(var(--pu) * 1.6);
+    right: calc(var(--pu) * -1.57);
+}
+
+/* Message dialog with one button */
+.returndialog.single .msgbox .actions {
+    grid-template-columns: 1fr;
+}
+
+.returndialog.single .msgbox .actions .closedialog {
+    display: none;
+}
+
+.returndialog.single .msgbox .actions a {
+    justify-self: center;
+    transform: translateX(0) scale(1);
+}
+
 .home-menu .bar-bottom {
     background-color: black;
     border-top: 2px solid #ddd;
@@ -1035,7 +1089,8 @@ body:has(.main-menu.ch-trans-on) .ch-selection {
     line-height: 3vh;
 }
 
-.returndialog {
+.returndialog,
+.authdialog {
     background-color: rgba(0, 0, 0, 0.4);
     position: absolute;
     inset: 0;
@@ -1045,7 +1100,8 @@ body:has(.main-menu.ch-trans-on) .ch-selection {
     z-index: 500;
 }
 
-.returndialog .msgbox {
+.returndialog .msgbox,
+.authdialog .msgbox {
     background-image: url("../assets/bg-pattern.png");
     width: 100vh; height: 70vh;
     border-radius: 1vw;
@@ -1061,7 +1117,8 @@ body:has(.main-menu.ch-trans-on) .ch-selection {
     to {transform: translateY(0);}
 }
 
-.returndialog .msgbox .text {
+.returndialog .msgbox .text,
+.authdialog .msgbox .text {
     color: #777;
     font-family: serif;
     font-size: 2.6em;
@@ -1071,7 +1128,8 @@ body:has(.main-menu.ch-trans-on) .ch-selection {
     margin-top: 20vh;
 }
 
-.returndialog .msgbox .actions {
+.returndialog .msgbox .actions,
+.authdialog .msgbox .actions {
     position: absolute;
     bottom: 2vh; left: 0; right: 0;
     display: grid;
@@ -1079,7 +1137,8 @@ body:has(.main-menu.ch-trans-on) .ch-selection {
     text-align: center;
 }
 
-.returndialog .msgbox .actions a  {
+.returndialog .msgbox .actions a,
+.authdialog .msgbox .actions a {
     background-image: url('../assets/btn-texture.png');
     background-size: contain;
     background-repeat: repeat-x;
@@ -1095,7 +1154,8 @@ body:has(.main-menu.ch-trans-on) .ch-selection {
     transition: 150ms;
 }
 
-.returndialog .msgbox .actions a::before {
+.returndialog .msgbox .actions a::before,
+.authdialog .msgbox .actions a::before {
     content: '';
     background-image: url('../assets/btn-left.png');
     background-size: contain;
@@ -1107,7 +1167,8 @@ body:has(.main-menu.ch-trans-on) .ch-selection {
     left: -2.6vw;
 }
 
-.returndialog .msgbox .actions a::after {
+.returndialog .msgbox .actions a::after,
+.authdialog .msgbox .actions a::after {
     content: '';
     background-image: url('../assets/btn-right.png');
     background-size: contain;
@@ -1119,7 +1180,8 @@ body:has(.main-menu.ch-trans-on) .ch-selection {
     right: -4.9vw;
 }
 
-.returndialog .msgbox .actions a:hover {
+.returndialog .msgbox .actions a:hover,
+.authdialog .msgbox .actions a:hover {
     transform: translateX(4vw) scale(1.05);
 }
 
@@ -1562,10 +1624,12 @@ button.set-btn:hover {
         width: 10vw;
         right: -9.8vw;
     }
-    .returndialog .msgbox .actions a {
+    .returndialog .msgbox .actions a,
+    .authdialog .msgbox .actions a {
         transform: translateX(5.5vw) scale(1);
     }
-    .returndialog .msgbox .actions a:hover {
+    .returndialog .msgbox .actions a:hover,
+    .authdialog .msgbox .actions a:hover {
         transform: translateX(5.5vw) scale(1.1);
     }
     .home-menu .bar-bottom .remote {
@@ -1809,3 +1873,58 @@ html.dark-theme .ch-selection .thecontent .buttons a {
 .cm-icon-preview video { width: 100%; height: 100%; object-fit: cover; }
 .cm-browse-row { display: flex; gap: 1vh; align-items: center; }
 .cm-browse-row input[type="text"] { flex: 1; }
+
+/* Password dialog (polkit): same box as the other dialogs, plus a Wii-style input field */
+.authdialog .msgbox .text {
+    margin-top: 9vh;
+    font-size: 2em;
+    line-height: 5vh;
+    padding: 0 5vh;
+}
+
+.authdialog .authprompt {
+    color: #777;
+    font-family: serif;
+    font-size: 1.6em;
+    letter-spacing: 0.3vh;
+    text-align: center;
+    margin-top: 3vh;
+    min-height: 3vh;
+}
+
+.authdialog input {
+    display: block;
+    box-sizing: border-box;
+    width: 60%;
+    height: 7vh;
+    margin: 1.5vh auto 0;
+    padding: 0 2vh;
+    border: 0.5vh solid #aedcf2;
+    border-radius: 3.5vh;
+    background: #fff;
+    color: #555;
+    font-size: 3vh;
+    text-align: center;
+    outline: none;
+}
+
+.authdialog input:focus {
+    border-color: #3bb7ff;
+}
+
+.authdialog input:disabled {
+    background: #eef2f5;
+}
+
+.authdialog .authhint {
+    color: #888;
+    font-family: serif;
+    font-size: 1.3em;
+    text-align: center;
+    min-height: 4vh;
+    margin-top: 1.5vh;
+}
+
+.authdialog .authhint.error {
+    color: #c0504d;
+}
