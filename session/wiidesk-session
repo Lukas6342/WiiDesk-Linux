@@ -13,7 +13,10 @@ fi
 export XDG_CURRENT_DESKTOP=WiiDesk
 export XDG_SESSION_DESKTOP=WiiDesk
 
-openbox &
+# GTK apps like Firefox can draw their own window buttons; ask them not to
+export GTK_CSD=0
+
+openbox --config-file /opt/wiidesk/session/openbox-rc.xml &
 OB=$!
 
 cd /opt/wiidesk || exit 1

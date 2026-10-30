@@ -64,40 +64,21 @@ window.addEventListener("load", () => {
     `);
 
     var lastBgMusicState;
+    // True when the Home key opened the menu on top of another app
+    var openedOverApp = false;
 
-    document.addEventListener('keydown', function(e) {
+    function openHomeMenu() {
+        lastBgMusicState = getBGMusicState();
 
-        if (e.keyCode === 27 || e.key === 'Escape') {
-            e.preventDefault();
+        if (getBGMusicState().intro) bgMusicIntroToggle();
 
-            if ($('.home-menu')[0].ariaLabel !== 'on') {
-                lastBgMusicState = getBGMusicState();
+        if (getBGMusicState().main) bgMusicToggle();
+        playSFX('home-in.mp3', userConfig.sfxVol);
+        $(".home-menu").css("display", "grid");
+        $('.home-menu')[0].ariaLabel = 'on';
+    }
 
-                if (getBGMusicState().intro) bgMusicIntroToggle();
-
-                if (getBGMusicState().main) bgMusicToggle();
-                playSFX('home-in.mp3', userConfig.sfxVol);
-                $(".home-menu").css("display", "grid");
-                $('.home-menu')[0].ariaLabel = 'on';
-            }
-
-            else {
-                $(".home-menu").addClass("fadeOut");
-                setTimeout(() => {
-                    $(".home-menu").css("display", "none");
-                    $(".home-menu").removeClass("fadeOut");
-                }, 250);
-                playSFX('button-cancel.mp3', userConfig.sfxVol);
-
-                if (lastBgMusicState && lastBgMusicState.intro) bgMusicIntroToggle();
-
-                if (lastBgMusicState && lastBgMusicState.main) bgMusicToggle();
-                $('.home-menu')[0].ariaLabel = null;
-            }
-        }
-    });
-
-    $(".close-pause-menu").click(event => {
+    function closeHomeMenu() {
         $(".home-menu").addClass("fadeOut");
         setTimeout(() => {
             $(".home-menu").css("display", "none");
@@ -109,7 +90,33 @@ window.addEventListener("load", () => {
 
         if (lastBgMusicState && lastBgMusicState.main) bgMusicToggle();
         $('.home-menu')[0].ariaLabel = null;
+
+        // Desktop app: go back to the app the menu was opened over
+        if (window.electronIpc) window.electronIpc.invoke('home-closed', openedOverApp);
+        openedOverApp = false;
+    }
+
+    function toggleHomeMenu() {
+        if ($('.home-menu')[0].ariaLabel !== 'on') openHomeMenu();
+        else closeHomeMenu();
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.keyCode === 27 || e.key === 'Escape') {
+            e.preventDefault();
+            toggleHomeMenu();
+        }
     });
+
+    // Home key (Super), forwarded by the desktop session
+    if (window.electronIpc) {
+        window.electronIpc.on('home-button', function(event, overApp) {
+            if ($('.home-menu')[0].ariaLabel !== 'on') openedOverApp = !!overApp;
+            toggleHomeMenu();
+        });
+    }
+
+    $(".close-pause-menu").click(closeHomeMenu);
 
     $(".backtomenu").click(event => {
         openConfirmDialog('Return to the Wii Menu?<br>(Anything not saved will be lost.)', rm2);

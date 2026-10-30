@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Openbox configuration for the WiiDesk session.
+     WiiDesk is the shell, so apps get no window decorations (no minimize/maximize/close
+     buttons) and the Home key (Super) is the only way back to the Wii pause menu. -->
+<openbox_config xmlns="http://openbox.org/3.4/rc">
+  <focus>
+    <focusNew>yes</focusNew>
+    <followMouse>no</followMouse>
+    <raiseOnFocus>no</raiseOnFocus>
+  </focus>
+
+  <desktops>
+    <number>1</number>
+  </desktops>
+
+  <keyboard>
+    <!-- Home button: show the Wii pause menu -->
+    <keybind key="Super_L">
+      <action name="Execute"><command>/opt/wiidesk/session/wiidesk-home</command></action>
+    </keybind>
+    <keybind key="Super_R">
+      <action name="Execute"><command>/opt/wiidesk/session/wiidesk-home</command></action>
+    </keybind>
+    <!-- Safety net for apps without their own quit shortcut -->
+    <keybind key="A-F4">
+      <action name="Close"/>
+    </keybind>
+  </keyboard>
+
+  <mouse>
+    <!-- Click to focus -->
+    <context name="Client">
+      <mousebind button="Left" action="Press">
+        <action name="Focus"/>
+        <action name="Raise"/>
+      </mousebind>
+    </context>
+  </mouse>
+
+  <applications>
+    <!-- Normal app windows: no title bar or buttons, always maximized.
+         Dialogs and menus are not affected. -->
+    <application type="normal">
+      <decor>no</decor>
+      <maximized>yes</maximized>
+    </application>
+  </applications>
+</openbox_config>

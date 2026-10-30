@@ -1,9 +1,44 @@
 const { app, BrowserWindow, ipcMain, shell } = require('electron');
-const { spawn } = require('child_process');
+const { spawn, execFile } = require('child_process');
 const path = require('path');
+const fs = require('fs');
 const { listApps } = require('./desktop-apps');
 
 let win = null;
+
+// The Home key (Super, bound in session/openbox-rc.xml) runs session/wiidesk-home,
+// which finds this process through the pid file and sends it SIGUSR2.
+const PIDFILE = path.join(process.env.XDG_RUNTIME_DIR || '/tmp', `wiidesk-${process.getuid()}.pid`);
+
+function showHomeMenu() {
+    if (!win) return;
+    // Tell the renderer whether an app was in front, so it can return there when the menu closes
+    const overApp = !win.isFocused();
+    win.show();
+    win.focus();
+    win.webContents.send('home-button', overApp);
+}
+
+// While WiiDesk is minimized behind an app, bring it back as soon as that app has quit
+// (otherwise the screen would stay empty). Counts the windows the window manager manages.
+let emptyDesktopTimer = null;
+function watchForEmptyDesktop() {
+    clearInterval(emptyDesktopTimer);
+    emptyDesktopTimer = setInterval(() => {
+        // isMinimized() is unreliable under X11, so stop once WiiDesk has the focus again
+        if (!win || win.isFocused()) return clearInterval(emptyDesktopTimer);
+        execFile('obxprop', ['--root', '_NET_CLIENT_LIST'], (err, out) => {
+            if (err || !win || win.isFocused()) return;
+            // Output looks like: _NET_CLIENT_LIST(WINDOW) = 4194307, 16777228
+            const ids = (out.split('=')[1] || '').split(',').filter((id) => id.trim());
+            if (ids.length <= 1) {
+                win.restore();
+                win.show();
+                win.focus();
+            }
+        });
+    }, 1000);
+}
 
 function createWindow() {
     win = new BrowserWindow({
@@ -77,5 +112,18 @@ ipcMain.handle('open-site', async (e, url) => {
     }
 });
 
-app.whenReady().then(createWindow);
+// The pause menu was closed: go back to the app it was opened over
+ipcMain.handle('home-closed', (e, overApp) => {
+    if (!overApp || !win) return;
+    win.minimize();
+    watchForEmptyDesktop();
+});
+
+process.on('SIGUSR2', showHomeMenu);
+
+app.whenReady().then(() => {
+    try { fs.writeFileSync(PIDFILE, String(process.pid)); } catch (e) { console.error('pid file:', e.message); }
+    createWindow();
+});
+app.on('will-quit', () => { try { fs.unlinkSync(PIDFILE); } catch (e) {} });
 app.on('window-all-closed', () => app.quit());
