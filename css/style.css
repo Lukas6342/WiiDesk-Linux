@@ -1927,3 +1927,107 @@ html.dark-theme .ch-selection .thecontent .buttons a {
 .authdialog .authhint.error {
     color: #c0504d;
 }
+
+/* ---- Wii settings pages: volume, WLAN, Bluetooth ---- */
+#settingsView .set-panel {
+    position: absolute;
+    top: 15vh; bottom: 20vh; left: 0; right: 0;
+    flex-direction: column;
+    align-items: center;
+    gap: 2vh;
+    padding: 2vh 0;
+    color: #e8e8e8;
+    font-size: 3.2vh;
+    overflow: hidden;
+}
+
+#settingsView .set-panel h2 {
+    margin: 0;
+    font-size: 5vh;
+    font-weight: normal;
+}
+
+#settingsView .set-row {
+    width: min(76vw, 150vh);
+    display: flex;
+    align-items: center;
+    gap: 2vw;
+}
+
+#settingsView .set-row > span:first-child {
+    flex: 1;
+    min-width: 0;
+}
+
+#settingsView .set-row input[type="range"] {
+    flex: 2;
+    accent-color: #3ab4e6;
+    cursor: inherit;
+}
+
+#settingsView .set-row .set-val {
+    width: 6ch;
+    text-align: right;
+}
+
+/* Small Wii-style pill buttons and list entries */
+#settingsView .set-pill,
+#settingsView .set-item {
+    display: flex;
+    align-items: center;
+    background: linear-gradient(#fdfdff, #dfe5ef);
+    border: 0.4vh solid #7cc8ec;
+    border-radius: 6vh;
+    padding: 0.8vh 2.6vw;
+    color: #444;
+    cursor: inherit;
+    transition: transform 150ms;
+    white-space: nowrap;
+}
+
+#settingsView .set-pill:hover,
+#settingsView .set-item:hover {
+    transform: scale(1.03);
+}
+
+#settingsView .set-list {
+    width: min(76vw, 150vh);
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.6vh;
+    padding: 0.8vh 2vw;
+    box-sizing: content-box;
+}
+
+#settingsView .set-item {
+    justify-content: space-between;
+    gap: 2vw;
+}
+
+#settingsView .set-item-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#settingsView .set-item-info {
+    margin-left: auto;
+    font-size: 2.4vh;
+    color: #777;
+}
+
+#settingsView .set-item-x {
+    font-size: 4vh;
+    line-height: 1;
+    padding: 0 0.6vw;
+    color: #c0392b;
+}
+
+#settingsView .set-note {
+    min-height: 3.6vh;
+    font-size: 2.6vh;
+    color: #b5b5b5;
+    text-align: center;
+}

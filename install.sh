@@ -5,8 +5,6 @@ set -e
 
 [ "$(id -u)" -eq 0 ] || { echo "Please run as root: sudo ./install.sh"; exit 1; }
 
-SRC="$(cd "$(dirname "$0")" && pwd)"
-
 # Without a system Electron, install it locally through npm
 install_electron() {
 if ! command -v electron >/dev/null 2>&1; then
@@ -44,14 +42,24 @@ install_wiidesk() {
 clear
 print_banner
 echo Downloading WiiDesk Linux
-mkdir -p /opt/wiidesk
-git clone https://github.com/Lukas6342/WiiDesk-Linux.git /opt/wiidesk
+if [ -d /opt/wiidesk/.git ]; then
+    git -C /opt/wiidesk pull
+else
+    mkdir -p /opt/wiidesk
+    git clone https://github.com/Lukas6342/WiiDesk-Linux.git /opt/wiidesk
+fi
 echo Installing
 install_electron
-echo Adding Sessions to your Login Manager If you wont have one please install one with your Package Manager
-install -Dm755 "$SRC/session/wiidesk-session" /usr/local/bin/wiidesk-session
-install -Dm644 "$SRC/session/wiidesk.desktop" /usr/share/xsessions/wiidesk.desktop
+register_session
 echo "Done. Please pick the 'WiiDesk' session in your login manager."
+}
+
+# Register the session with the display manager (works for X11 sessions on all distros).
+# Always copied from /opt/wiidesk so updates refresh it too.
+register_session() {
+    echo "Adding the session to your login manager (if you have none, install one with your package manager)"
+    install -Dm755 /opt/wiidesk/session/wiidesk-session /usr/local/bin/wiidesk-session
+    install -Dm644 /opt/wiidesk/session/wiidesk.desktop /usr/share/xsessions/wiidesk.desktop
 }
 
 # Finding PM
@@ -84,20 +92,24 @@ case "$number" in
         case "$PM" in
             pacman)
                 echo "Installing dependencies via pacman"
-                sudo pacman -Sy --needed --noconfirm openbox electron xorg-xrandr git python-gobject polkit
+                pacman -S --needed --noconfirm openbox electron xorg-xrandr git python-gobject polkit
+                pacman -S --needed --noconfirm libpulse networkmanager bluez-utils brightnessctl || echo "Could not install the optional system tools (volume, WLAN, Bluetooth, brightness)."
                 ;;
             apt)
                 echo "Installing dependencies via apt"
-                sudo apt update
-                sudo apt install -y openbox nodejs npm x11-xserver-utils git python3-gi gir1.2-polkit-1.0
+                apt update
+                apt install -y openbox nodejs npm x11-xserver-utils git python3-gi gir1.2-polkit-1.0
+                apt install -y pulseaudio-utils network-manager bluez brightnessctl || echo "Could not install the optional system tools (volume, WLAN, Bluetooth, brightness)."
                 ;;
             dnf)
                 echo "Installing dependencies via dnf"
-                sudo dnf install -y openbox nodejs npm xrandr python3-gobject polkit-libs git
+                dnf install -y openbox nodejs npm xrandr python3-gobject polkit-libs git
+                dnf install -y pulseaudio-utils NetworkManager bluez brightnessctl || echo "Could not install the optional system tools (volume, WLAN, Bluetooth, brightness)."
                 ;;
             zypper)
                 echo "Installing dependencies via zypper"
-                sudo zypper --non-interactive install openbox nodejs npm xrandr git python3-gobject typelib-1_0-Polkit-1_0
+                zypper --non-interactive install openbox nodejs npm xrandr git python3-gobject typelib-1_0-Polkit-1_0
+                zypper --non-interactive install pulseaudio-utils NetworkManager bluez brightnessctl || echo "Could not install the optional system tools (volume, WLAN, Bluetooth, brightness)."
                 ;;
             *)
                 echo "We can not find your PM. The installation on your distro might be more complex.."
@@ -110,13 +122,11 @@ case "$number" in
     2)
         clear
         print_banner
-        echo "Updating your Wiidesk"
-        clear
-        print_banner
         echo "Updating WiiDesk-Linux..."
         if [ -d "/opt/wiidesk/.git" ]; then
-            cd /opt/wiidesk && git pull
+            git -C /opt/wiidesk pull
             install_electron
+            register_session
         else
             echo "We cant find your WiiDesk Installation. Please install it."
         fi
@@ -131,6 +141,7 @@ case "$number" in
         echo "  - Python GI      : python-gobject / python3-gi"
         echo "  - Auth / Polkit  : polkit / gir1.2-polkit-1.0 / polkit-libs"
         echo "  - Tools          : git"
+        echo "  - Optional       : pactl (volume), nmcli / NetworkManager (WLAN), bluetoothctl / bluez (Bluetooth), brightnessctl (brightness)"
         printf "Please press Y once you have successfully installed the dependencies; if you encounter any issues, please open an issue on GitHub and include the name of your distribution: "
         read -r input
         case "$input" in

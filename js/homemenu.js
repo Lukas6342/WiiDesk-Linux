@@ -145,9 +145,29 @@ window.addEventListener("load", () => {
 
     // --- Password dialog for system requests (polkit), driven by main.js ---
     var authId = null;
+    // Set while the dialog asks for something locally (e.g. a Wi-Fi password) instead of for polkit
+    var localAsk = null;
+
+    // askPassword(title, prompt, callback): callback(text) on OK, nothing happens on cancel
+    window.askPassword = function (title, prompt, callback) {
+        if (authId !== null) return;
+        authId = 'local';
+        localAsk = callback;
+        var input = document.getElementById('authInput');
+        document.getElementById('authText').textContent = title;
+        document.getElementById('authPrompt').textContent = prompt;
+        authSetHint('');
+        input.type = 'password';
+        input.value = '';
+        input.disabled = false;
+        $(".authdialog").css("display", "flex");
+        playSFX('alert.mp3', userConfig.sfxVol);
+        input.focus();
+    };
 
     function authClose() {
         authId = null;
+        localAsk = null;
         document.getElementById('authInput').value = '';
         $(".authdialog").css("display", "none");
     }
@@ -160,6 +180,12 @@ window.addEventListener("load", () => {
         var input = document.getElementById('authInput');
         if (authId === null || input.disabled) return;
         playSFX('button-select.mp3', userConfig.sfxVol);
+        if (localAsk) {
+            var cb = localAsk, text = input.value;
+            authClose();
+            cb(text);
+            return;
+        }
         authSend({ type: 'response', id: authId, text: input.value });
         input.value = '';
         input.disabled = true;
@@ -169,7 +195,7 @@ window.addEventListener("load", () => {
     function authCancel() {
         if (authId === null) return;
         playSFX('button-cancel.mp3', userConfig.sfxVol);
-        authSend({ type: 'cancel', id: authId });
+        if (!localAsk) authSend({ type: 'cancel', id: authId });
         authClose();
     }
 

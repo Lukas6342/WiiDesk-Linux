@@ -4,6 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const readline = require('readline');
 const { listApps } = require('./desktop-apps');
+const systemControl = require('./system-control');
 
 let win = null;
 
@@ -118,6 +119,9 @@ ipcMain.handle('power', async (e, kind) => {
     }
     return { ok: false, error: 'no way to ' + kind + ' found' };
 });
+
+// Volume, brightness, Wi-Fi and Bluetooth for the Wii settings
+systemControl.register(ipcMain);
 
 // Open a website in the default browser (http/https only)
 ipcMain.handle('open-site', async (e, url) => {

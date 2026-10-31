@@ -21,6 +21,22 @@
     <keybind key="Super_R">
       <action name="Execute"><command>/opt/wiidesk/session/wiidesk-home</command></action>
     </keybind>
+    <!-- Media keys: volume (pactl) and brightness (brightnessctl) -->
+    <keybind key="XF86AudioRaiseVolume">
+      <action name="Execute"><command>/opt/wiidesk/session/wiidesk-media volume-up</command></action>
+    </keybind>
+    <keybind key="XF86AudioLowerVolume">
+      <action name="Execute"><command>/opt/wiidesk/session/wiidesk-media volume-down</command></action>
+    </keybind>
+    <keybind key="XF86AudioMute">
+      <action name="Execute"><command>/opt/wiidesk/session/wiidesk-media mute</command></action>
+    </keybind>
+    <keybind key="XF86MonBrightnessUp">
+      <action name="Execute"><command>/opt/wiidesk/session/wiidesk-media brightness-up</command></action>
+    </keybind>
+    <keybind key="XF86MonBrightnessDown">
+      <action name="Execute"><command>/opt/wiidesk/session/wiidesk-media brightness-down</command></action>
+    </keybind>
     <!-- Safety net for apps without their own quit shortcut -->
     <keybind key="A-F4">
       <action name="Close"/>
