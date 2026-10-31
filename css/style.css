@@ -902,46 +902,6 @@ body:has(.main-menu.ch-trans-on) .ch-selection {
     right: -4.9vw;
 }
 
-/* Power sub menu: smaller buttons stacked below "Log Out", drawn over the free space
-   so Wii Menu and Log Out stay on one line.
-   --pu is a length unit that follows the smaller screen side, so it also fits ultra-wide screens. */
-.home-menu .in-between .power-wrap {
-    --pu: min(1vw, 1.75vh);
-    position: relative;
-    display: flex;
-}
-
-.home-menu .in-between .power-sub {
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    margin-top: calc(var(--pu) * 0.6);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: calc(var(--pu) * 0.5);
-}
-
-/* Same proportions as the big buttons: total height = height + padding-top,
-   end caps are half as wide as the button is tall */
-.home-menu .in-between .power-sub a {
-    padding-top: calc(var(--pu) * 0.9);
-    width: calc(var(--pu) * 7.5);
-    height: calc(var(--pu) * 2.3);
-    font-size: calc(var(--pu) * 1);
-}
-
-.home-menu .in-between .power-sub a::before {
-    width: calc(var(--pu) * 1.6);
-    left: calc(var(--pu) * -1.42);
-}
-
-.home-menu .in-between .power-sub a::after {
-    width: calc(var(--pu) * 1.6);
-    right: calc(var(--pu) * -1.57);
-}
-
 /* Message dialog with one button */
 .returndialog.single .msgbox .actions {
     grid-template-columns: 1fr;
@@ -1090,7 +1050,8 @@ body:has(.main-menu.ch-trans-on) .ch-selection {
 }
 
 .returndialog,
-.authdialog {
+.authdialog,
+.powerdialog {
     background-color: rgba(0, 0, 0, 0.4);
     position: absolute;
     inset: 0;
@@ -1101,7 +1062,8 @@ body:has(.main-menu.ch-trans-on) .ch-selection {
 }
 
 .returndialog .msgbox,
-.authdialog .msgbox {
+.authdialog .msgbox,
+.powerdialog .msgbox {
     background-image: url("../assets/bg-pattern.png");
     width: 100vh; height: 70vh;
     border-radius: 1vw;
@@ -1118,7 +1080,8 @@ body:has(.main-menu.ch-trans-on) .ch-selection {
 }
 
 .returndialog .msgbox .text,
-.authdialog .msgbox .text {
+.authdialog .msgbox .text,
+.powerdialog .msgbox .text {
     color: #777;
     font-family: serif;
     font-size: 2.6em;
@@ -1129,7 +1092,8 @@ body:has(.main-menu.ch-trans-on) .ch-selection {
 }
 
 .returndialog .msgbox .actions,
-.authdialog .msgbox .actions {
+.authdialog .msgbox .actions,
+.powerdialog .msgbox .actions {
     position: absolute;
     bottom: 2vh; left: 0; right: 0;
     display: grid;
@@ -1138,7 +1102,8 @@ body:has(.main-menu.ch-trans-on) .ch-selection {
 }
 
 .returndialog .msgbox .actions a,
-.authdialog .msgbox .actions a {
+.authdialog .msgbox .actions a,
+.powerdialog .msgbox .actions a {
     background-image: url('../assets/btn-texture.png');
     background-size: contain;
     background-repeat: repeat-x;
@@ -1155,7 +1120,8 @@ body:has(.main-menu.ch-trans-on) .ch-selection {
 }
 
 .returndialog .msgbox .actions a::before,
-.authdialog .msgbox .actions a::before {
+.authdialog .msgbox .actions a::before,
+.powerdialog .msgbox .actions a::before {
     content: '';
     background-image: url('../assets/btn-left.png');
     background-size: contain;
@@ -1168,7 +1134,8 @@ body:has(.main-menu.ch-trans-on) .ch-selection {
 }
 
 .returndialog .msgbox .actions a::after,
-.authdialog .msgbox .actions a::after {
+.authdialog .msgbox .actions a::after,
+.powerdialog .msgbox .actions a::after {
     content: '';
     background-image: url('../assets/btn-right.png');
     background-size: contain;
@@ -1181,8 +1148,38 @@ body:has(.main-menu.ch-trans-on) .ch-selection {
 }
 
 .returndialog .msgbox .actions a:hover,
-.authdialog .msgbox .actions a:hover {
+.authdialog .msgbox .actions a:hover,
+.powerdialog .msgbox .actions a:hover {
     transform: translateX(4vw) scale(1.05);
+}
+
+/* Longer label than the other HOME menu button: keep it on one line */
+.home-menu .in-between .power-btn {
+    white-space: nowrap;
+    font-size: 1.45vw;
+}
+
+/* Shutdown options: 2x2 choices plus Cancel in the middle of the dialog */
+.powerdialog .msgbox .text {
+    margin-top: 6vh;
+}
+
+.powerdialog .msgbox .actions {
+    top: 20vh;
+    bottom: auto;
+    grid-template-columns: 1fr 1fr;
+    row-gap: 3.5vh;
+    padding: 0 3vw;
+}
+
+.powerdialog .msgbox .actions a {
+    justify-self: center;
+    width: 24vh;
+    font-size: 2vw;
+}
+
+.powerdialog .msgbox .actions a.cancel {
+    grid-column: 1 / -1;
 }
 
 .settings {
@@ -1625,11 +1622,13 @@ button.set-btn:hover {
         right: -9.8vw;
     }
     .returndialog .msgbox .actions a,
-    .authdialog .msgbox .actions a {
+    .authdialog .msgbox .actions a,
+    .powerdialog .msgbox .actions a {
         transform: translateX(5.5vw) scale(1);
     }
     .returndialog .msgbox .actions a:hover,
-    .authdialog .msgbox .actions a:hover {
+    .authdialog .msgbox .actions a:hover,
+    .powerdialog .msgbox .actions a:hover {
         transform: translateX(5.5vw) scale(1.1);
     }
     .home-menu .bar-bottom .remote {

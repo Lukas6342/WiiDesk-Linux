@@ -38,11 +38,15 @@
   </mouse>
 
   <applications>
-    <!-- Normal app windows: no title bar or buttons, always maximized.
+    <!-- Normal app windows: no title bar or buttons, always maximized, and never resizable.
+         Position and size are forced, so even when an app asks to un-maximize, resize or move
+         itself (e.g. through its own client-side window buttons), it keeps covering the screen.
          Dialogs and menus are not affected. -->
     <application type="normal">
       <decor>no</decor>
       <maximized>yes</maximized>
+      <position force="yes"><x>0</x><y>0</y></position>
+      <size><width>100%</width><height>100%</height></size>
     </application>
   </applications>
 </openbox_config>

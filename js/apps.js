@@ -49,17 +49,6 @@ function syncInstalledApps() {
         var channels = userChannels.filter(function (c) { return !c.autoApp || installed[c.id]; });
         if (channels.length !== userChannels.length) changed = true;
 
-        // Channels created before an override existed still point at the plain .desktop file
-        apps.forEach(function (a) {
-            var override = LAUNCH_OVERRIDES[a.id];
-            channels.forEach(function (c) {
-                if (override && c.id === APP_CHANNEL_PREFIX + a.id && c.autoApp && c.target === a.file) {
-                    c.target = override;
-                    changed = true;
-                }
-            });
-        });
-
         // Add channels for new apps
         var have = {};
         channels.forEach(function (c) { have[c.id] = true; });
@@ -74,7 +63,7 @@ function syncInstalledApps() {
                 assets: 'assets/channels/',
                 channelart: 'channelart/',
                 customArt: { icon: a.icon, previewImage: null, previewMusic: null },
-                target: LAUNCH_OVERRIDES[a.id] || a.file,
+                target: a.file,
                 isAppLauncher: true,
                 autoApp: true
             });

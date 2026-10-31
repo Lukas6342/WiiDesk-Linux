@@ -31,14 +31,7 @@ window.addEventListener("load", () => {
             </div>
             <div class="in-between">
                 <a class="buttonlike backtomenu" onmouseenter="playSFX('button-hover.mp3', userConfig.sfxVol)">Wii Menu</a>
-                <div class="power-wrap">
-                    <a class="buttonlike logout" onmouseenter="playSFX('button-hover.mp3', userConfig.sfxVol)">Log Out</a>
-                    <div class="power-sub">
-                        <a class="buttonlike power-opt" data-power="reboot" onmouseenter="playSFX('button-hover.mp3', userConfig.sfxVol)">Restart</a>
-                        <a class="buttonlike power-opt" data-power="poweroff" onmouseenter="playSFX('button-hover.mp3', userConfig.sfxVol)">Shut Down</a>
-                        <a class="buttonlike power-opt" data-power="suspend" onmouseenter="playSFX('button-hover.mp3', userConfig.sfxVol)">Sleep</a>
-                    </div>
-                </div>
+                <a class="buttonlike power-btn" onmouseenter="playSFX('button-hover.mp3', userConfig.sfxVol)">Shutdown Options</a>
             </div>
             <div class="bar-bottom">
                 <img src="assets/remote.png" class="remote" />
@@ -74,6 +67,18 @@ window.addEventListener("load", () => {
                 <div class="actions">
                     <a id="authOk" onmouseenter="playSFX('button-hover.mp3', userConfig.sfxVol)">OK</a>
                     <a id="authCancel" onmouseenter="playSFX('button-hover.mp3', userConfig.sfxVol)">Cancel</a>
+                </div>
+            </div>
+        </div>
+        <div class="powerdialog">
+            <div class="msgbox">
+                <div class="text">Shutdown Options</div>
+                <div class="actions">
+                    <a data-power="logout" onmouseenter="playSFX('button-hover.mp3', userConfig.sfxVol)">Log Out</a>
+                    <a data-power="reboot" onmouseenter="playSFX('button-hover.mp3', userConfig.sfxVol)">Restart</a>
+                    <a data-power="poweroff" onmouseenter="playSFX('button-hover.mp3', userConfig.sfxVol)">Shut Down</a>
+                    <a data-power="suspend" onmouseenter="playSFX('button-hover.mp3', userConfig.sfxVol)">Sleep</a>
+                    <a class="cancel" onmouseenter="playSFX('button-hover.mp3', userConfig.sfxVol)">Cancel</a>
                 </div>
             </div>
         </div>
@@ -133,6 +138,7 @@ window.addEventListener("load", () => {
         if (e.keyCode === 27 || e.key === 'Escape') {
             e.preventDefault();
             if (authId !== null) return;
+            if ($(".powerdialog").css("display") !== "none") { closePowerDialog(); return; }
             toggleHomeMenu();
         }
     });
@@ -224,25 +230,28 @@ window.addEventListener("load", () => {
         openConfirmDialog('Return to the Wii Menu?<br>(Anything not saved will be lost.)', rm2);
     });
 
-    // Logging out only makes sense inside the desktop app
-    if (!window.electronIpc) $(".logout").hide();
+    // Log out / restart / shut down / sleep only make sense inside the desktop app
+    if (!window.electronIpc) $(".power-btn").hide();
 
-    $(".logout").click(event => {
-        openConfirmDialog('Log out of WiiDesk?<br>(Anything not saved will be lost.)', logOut);
+    function closePowerDialog() {
+        $(".powerdialog").css("display", "none");
+    }
+
+    $(".power-btn").click(function () {
+        $(".powerdialog").css("display", "flex");
+        playSFX('button-select-big.mp3', userConfig.sfxVol);
     });
 
-    // Restart / Shut Down / Sleep (sub menu below the Log Out button)
-    if (!window.electronIpc) $(".power-sub").hide();
+    $(".powerdialog .cancel").click(function () {
+        playSFX('button-cancel.mp3', userConfig.sfxVol);
+        closePowerDialog();
+    });
 
-    $(".power-opt").click(function () {
+    $(".powerdialog [data-power]").click(function () {
         var kind = this.getAttribute('data-power');
-        if (kind === 'reboot') {
-            openConfirmDialog('Restart the computer?<br>(Anything not saved will be lost.)', function () { powerAction('reboot'); });
-        } else if (kind === 'poweroff') {
-            openConfirmDialog('Shut down the computer?<br>(Anything not saved will be lost.)', function () { powerAction('poweroff'); });
-        } else {
-            powerAction('suspend');
-        }
+        closePowerDialog();
+        if (kind === 'logout') logOut();
+        else powerAction(kind);
     });
 
     $(".closedialog").click(event => {
