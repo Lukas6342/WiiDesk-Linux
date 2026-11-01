@@ -115,13 +115,14 @@ async function getLibrary() {
     return result;
 }
 
-function openUrl(url) {
+// silent = start Steam minimized when it is not running yet, so only the game shows up
+function openUrl(url, silent) {
     const tryRun = (cmd, args) => new Promise((resolve) => {
         const child = spawn(cmd, args, { stdio: 'ignore', detached: true });
         child.once('error', (e) => resolve({ ok: false, code: e.code }));
         child.once('spawn', () => { child.unref(); resolve({ ok: true }); });
     });
-    return tryRun('steam', [url]).then((r) => (r.ok || r.code !== 'ENOENT') ? r : tryRun('xdg-open', [url]));
+    return tryRun('steam', silent ? ['-silent', url] : [url]).then((r) => (r.ok || r.code !== 'ENOENT') ? r : tryRun('xdg-open', [url]));
 }
 
 const ACTIONS = { install: 'steam://install/', start: 'steam://rungameid/', uninstall: 'steam://uninstall/' };
@@ -131,7 +132,7 @@ function register(ipcMain) {
     ipcMain.handle('steam-action', (e, kind, appid) => {
         // only plain numeric app ids reach the command line
         if (!ACTIONS[kind] || !/^\d{1,10}$/.test(String(appid))) return { ok: false, error: 'invalid request' };
-        return openUrl(ACTIONS[kind] + appid);
+        return openUrl(ACTIONS[kind] + appid, kind === 'start');
     });
 }
 

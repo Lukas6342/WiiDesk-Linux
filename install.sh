@@ -18,6 +18,9 @@ if ! command -v electron >/dev/null 2>&1; then
 fi
 }
 
+# Branch to install (default main): sudo WIIDESK_BRANCH=dev sh install.sh
+BRANCH="${WIIDESK_BRANCH:-main}"
+
 # Menu
 print_banner() {
 cat << 'EOF'
@@ -38,15 +41,22 @@ cat << 'EOF'
 EOF
 }
 
+# Fetch and switch to the wanted branch, then fast-forward it
+update_checkout() {
+    git -C /opt/wiidesk fetch origin "$BRANCH"
+    git -C /opt/wiidesk checkout "$BRANCH"
+    git -C /opt/wiidesk pull --ff-only origin "$BRANCH"
+}
+
 install_wiidesk() {
 clear
 print_banner
 echo Downloading WiiDesk Linux
 if [ -d /opt/wiidesk/.git ]; then
-    git -C /opt/wiidesk pull
+    update_checkout
 else
     mkdir -p /opt/wiidesk
-    git clone https://github.com/Lukas6342/WiiDesk-Linux.git /opt/wiidesk
+    git clone -b "$BRANCH" https://github.com/Lukas6342/WiiDesk-Linux.git /opt/wiidesk
 fi
 echo Installing
 install_electron
@@ -93,23 +103,23 @@ case "$number" in
             pacman)
                 echo "Installing dependencies via pacman"
                 pacman -S --needed --noconfirm openbox electron xorg-xrandr git python-gobject polkit
-                pacman -S --needed --noconfirm libpulse networkmanager bluez-utils brightnessctl || echo "Could not install the optional system tools (volume, WLAN, Bluetooth, brightness)."
+                pacman -S --needed --noconfirm libpulse networkmanager bluez-utils brightnessctl wmctrl || echo "Could not install the optional system tools (volume, WLAN, Bluetooth, brightness)."
                 ;;
             apt)
                 echo "Installing dependencies via apt"
                 apt update
                 apt install -y openbox nodejs npm x11-xserver-utils git python3-gi gir1.2-polkit-1.0
-                apt install -y pulseaudio-utils network-manager bluez brightnessctl || echo "Could not install the optional system tools (volume, WLAN, Bluetooth, brightness)."
+                apt install -y pulseaudio-utils network-manager bluez brightnessctl wmctrl || echo "Could not install the optional system tools (volume, WLAN, Bluetooth, brightness)."
                 ;;
             dnf)
                 echo "Installing dependencies via dnf"
                 dnf install -y openbox nodejs npm xrandr python3-gobject polkit-libs git
-                dnf install -y pulseaudio-utils NetworkManager bluez brightnessctl || echo "Could not install the optional system tools (volume, WLAN, Bluetooth, brightness)."
+                dnf install -y pulseaudio-utils NetworkManager bluez brightnessctl wmctrl || echo "Could not install the optional system tools (volume, WLAN, Bluetooth, brightness)."
                 ;;
             zypper)
                 echo "Installing dependencies via zypper"
                 zypper --non-interactive install openbox nodejs npm xrandr git python3-gobject typelib-1_0-Polkit-1_0
-                zypper --non-interactive install pulseaudio-utils NetworkManager bluez brightnessctl || echo "Could not install the optional system tools (volume, WLAN, Bluetooth, brightness)."
+                zypper --non-interactive install pulseaudio-utils NetworkManager bluez brightnessctl wmctrl || echo "Could not install the optional system tools (volume, WLAN, Bluetooth, brightness)."
                 ;;
             *)
                 echo "We can not find your PM. The installation on your distro might be more complex.."
@@ -124,7 +134,7 @@ case "$number" in
         print_banner
         echo "Updating WiiDesk-Linux..."
         if [ -d "/opt/wiidesk/.git" ]; then
-            git -C /opt/wiidesk pull
+            update_checkout
             install_electron
             register_session
         else
@@ -141,7 +151,7 @@ case "$number" in
         echo "  - Python GI      : python-gobject / python3-gi"
         echo "  - Auth / Polkit  : polkit / gir1.2-polkit-1.0 / polkit-libs"
         echo "  - Tools          : git"
-        echo "  - Optional       : pactl (volume), nmcli / NetworkManager (WLAN), bluetoothctl / bluez (Bluetooth), brightnessctl (brightness)"
+        echo "  - Optional       : pactl (volume), nmcli / NetworkManager (WLAN), bluetoothctl / bluez (Bluetooth), brightnessctl (brightness), wmctrl (closing programs)"
         printf "Please press Y once you have successfully installed the dependencies; if you encounter any issues, please open an issue on GitHub and include the name of your distribution: "
         read -r input
         case "$input" in

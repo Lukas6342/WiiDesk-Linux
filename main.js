@@ -179,6 +179,29 @@ ipcMain.on('polkit-reply', (e, msg) => {
     if (polkitAgent && polkitAgent.stdin.writable) polkitAgent.stdin.write(JSON.stringify(msg) + '\n');
 });
 
+// "Wii Menu" in the HOME menu: close every open program instead of leaving it in the background.
+// Windows are closed politely through the window manager (wmctrl); without wmctrl the owning
+// processes get SIGTERM. WiiDesk's own window is never touched.
+function execOut(cmd, args) {
+    return new Promise((resolve) => execFile(cmd, args, (err, out) => resolve(err ? null : out)));
+}
+
+ipcMain.handle('close-apps', async () => {
+    const list = await execOut('obxprop', ['--root', '_NET_CLIENT_LIST']);
+    if (list === null) return { ok: false, error: 'obxprop not found' };
+    const ids = (list.split('=')[1] || '').split(',').map((s) => s.trim()).filter(Boolean);
+    let closed = 0;
+    for (const id of ids) {
+        const out = await execOut('obxprop', ['--id', id, '_NET_WM_PID']);
+        const pid = out && parseInt((out.split('=')[1] || '').trim(), 10);
+        if (pid === process.pid) continue;
+        const viaWm = await new Promise((resolve) => execFile('wmctrl', ['-ic', id], (err) => resolve(!err)));
+        if (!viaWm && pid > 1) { try { process.kill(pid, 'SIGTERM'); } catch (e) { continue; } }
+        closed++;
+    }
+    return { ok: true, closed };
+});
+
 // The pause menu was closed: go back to the app it was opened over
 ipcMain.handle('home-closed', (e, overApp) => {
     if (!overApp || !win) return;

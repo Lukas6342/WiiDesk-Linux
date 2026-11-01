@@ -253,7 +253,11 @@ window.addEventListener("load", () => {
     $(".close-pause-menu").click(closeHomeMenu);
 
     $(".backtomenu").click(event => {
-        openConfirmDialog('Return to the Wii Menu?<br>(Anything not saved will be lost.)', rm2);
+        openConfirmDialog('Return to the Wii Menu?<br>(Anything not saved will be lost.)', function () {
+            // Desktop app: close the open programs instead of leaving them behind the Wii menu
+            if (window.electronIpc) window.electronIpc.invoke('close-apps');
+            rm2();
+        });
     });
 
     // Log out / restart / shut down / sleep only make sense inside the desktop app
