@@ -65,6 +65,13 @@
     <application class="steam" title="*Vulkan*">
       <iconic>yes</iconic>
     </application>
+    <!-- "Starting <game>" / "Launching <game>" progress windows -->
+    <application class="steam" title="Starting*">
+      <iconic>yes</iconic>
+    </application>
+    <application class="steam" title="Launching*">
+      <iconic>yes</iconic>
+    </application>
 
     <!-- Normal app windows: no title bar or buttons, always maximized, and never resizable.
          Position and size are forced, so even when an app asks to un-maximize, resize or move
