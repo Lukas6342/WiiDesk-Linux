@@ -1,6 +1,6 @@
 # Now its tecnicly working :D Im still working on some Fetures but you can use it now
 
-
+# Were currently testing a steam integration if you want to test it please use the dev branch
 # License
 
 WiiDesk is a project based on the project "Onliine" by JerosGamer89.
