@@ -76,16 +76,74 @@ function decodeXml(s) {
     return s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&amp;/g, '&');
 }
 
-// Owned games from the public profile list. Needs "Game details" set to public in Steam.
-async function ownedGames(steamId) {
-    const res = await fetch('https://steamcommunity.com/profiles/' + steamId + '/games?tab=all&xml=1', { signal: AbortSignal.timeout(15000) });
+// Steam Web API key (optional, most reliable way to list the library). Free at
+// https://steamcommunity.com/dev/apikey - stored next to WiiDesk's other settings.
+function keyFile() {
+    return path.join(require('electron').app.getPath('userData'), 'steam-api-key.txt');
+}
+
+function readKey() {
+    try { return fs.readFileSync(keyFile(), 'utf8').trim(); } catch (e) { return ''; }
+}
+
+const BROWSER_UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36';
+
+async function fetchText(url) {
+    const res = await fetch(url, { headers: { 'User-Agent': BROWSER_UA, 'Accept-Language': 'en' }, signal: AbortSignal.timeout(15000) });
     if (!res.ok) throw new Error('Steam answered with HTTP ' + res.status);
-    const xml = await res.text();
+    return res.text();
+}
+
+// 1) official Web API (needs the key)
+async function ownedViaApi(steamId, key) {
+    const url = 'https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=' + encodeURIComponent(key) +
+        '&steamid=' + steamId + '&include_appinfo=1&include_played_free_games=1&format=json';
+    const data = JSON.parse(await fetchText(url));
+    return ((data.response && data.response.games) || []).map((g) => ({ appid: String(g.appid), name: g.name || ('App ' + g.appid) }));
+}
+
+// 2) games page of the public profile, current format: JSON inside a data attribute
+function parseProfileHtml(html) {
+    const m = html.match(/data-profile-gameslist="([^"]*)"/);
+    if (!m) return null;
+    const data = JSON.parse(decodeXml(m[1]));
+    const list = data.rgGames || (data.response && data.response.games) || [];
+    return list.map((g) => ({ appid: String(g.appid), name: g.name || ('App ' + g.appid) }));
+}
+
+// 3) games page of the public profile, old XML format
+function parseProfileXml(xml) {
     const games = [];
     const re = /<game>\s*<appID>(\d+)<\/appID>\s*<name>(?:<!\[CDATA\[([\s\S]*?)\]\]>|([^<]*))<\/name>/g;
     let m;
     while ((m = re.exec(xml))) games.push({ appid: m[1], name: decodeXml(m[2] !== undefined ? m[2] : m[3]) });
     return games;
+}
+
+// Returns { games, via } or throws with a readable reason
+async function ownedGames(steamId) {
+    const reasons = [];
+    const key = readKey();
+    if (key) {
+        try {
+            const g = await ownedViaApi(steamId, key);
+            if (g.length) return { games: g, via: 'api' };
+            reasons.push('the API key returned no games (private game details or wrong key)');
+        } catch (e) { reasons.push('API: ' + e.message); }
+    }
+    for (const [name, url, parse] of [
+        ['profile page', 'https://steamcommunity.com/profiles/' + steamId + '/games/?tab=all', parseProfileHtml],
+        ['profile xml', 'https://steamcommunity.com/profiles/' + steamId + '/games?tab=all&xml=1', parseProfileXml]
+    ]) {
+        try {
+            const g = parse(await fetchText(url));
+            if (g && g.length) return { games: g, via: name };
+            reasons.push(name + ': nothing found');
+        } catch (e) { reasons.push(name + ': ' + e.message); }
+    }
+    const err = new Error(reasons.join('; '));
+    err.reasons = reasons;
+    throw err;
 }
 
 async function getLibrary() {
@@ -99,10 +157,11 @@ async function getLibrary() {
         result.note = 'Log in to Steam once to see all your games. Showing installed games only.';
     } else {
         try {
-            owned = await ownedGames(id);
-            if (!owned.length) result.note = 'No games found. Set "Game details" in your Steam profile privacy to public to see your whole library. Showing installed games only.';
+            owned = (await ownedGames(id)).games;
         } catch (e) {
-            result.note = "Couldn't load your library (" + e.message + '). Showing installed games only.';
+            result.needKey = true;
+            result.hasKey = !!readKey();
+            result.note = "Couldn't read your library (" + e.message + '). Showing installed games only.';
         }
     }
     const all = new Map();
@@ -129,6 +188,15 @@ const ACTIONS = { install: 'steam://install/', start: 'steam://rungameid/', unin
 
 function register(ipcMain) {
     ipcMain.handle('steam-library', () => getLibrary().catch((e) => ({ ok: false, error: e.message })));
+    // Saves (or clears, with an empty string) the Steam Web API key
+    ipcMain.handle('steam-set-key', (e, key) => {
+        key = String(key || '').trim();
+        if (key && !/^[0-9A-Fa-f]{32}$/.test(key)) return { ok: false, error: 'That does not look like a Steam API key (32 characters).' };
+        try {
+            if (key) fs.writeFileSync(keyFile(), key, { mode: 0o600 }); else fs.rmSync(keyFile(), { force: true });
+            return { ok: true };
+        } catch (err) { return { ok: false, error: err.message }; }
+    });
     ipcMain.handle('steam-action', (e, kind, appid) => {
         // only plain numeric app ids reach the command line
         if (!ACTIONS[kind] || !/^\d{1,10}$/.test(String(appid))) return { ok: false, error: 'invalid request' };
@@ -136,4 +204,4 @@ function register(ipcMain) {
     });
 }
 
-module.exports = { register, parseVdf, installedGames, currentSteamId };
+module.exports = { register, parseVdf, installedGames, currentSteamId, parseProfileHtml, parseProfileXml };

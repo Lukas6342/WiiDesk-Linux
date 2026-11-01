@@ -1972,6 +1972,7 @@ html.dark-theme .ch-selection .thecontent .buttons a {
 
 /* Small Wii-style pill buttons and list entries */
 #settingsView .set-pill,
+#steamView .set-pill,
 #settingsView .set-item {
     display: flex;
     align-items: center;
@@ -1986,6 +1987,7 @@ html.dark-theme .ch-selection .thecontent .buttons a {
 }
 
 #settingsView .set-pill:hover,
+#steamView .set-pill:hover,
 #settingsView .set-item:hover {
     transform: scale(1.03);
 }
@@ -2093,3 +2095,25 @@ html.dark-theme .ch-selection .thecontent .buttons a {
 #steamView .steam-name { padding: 0.8vh 1vh 0; font-size: 2.4vh; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #steamView .steam-state { padding: 0 1vh 0.8vh; font-size: 2.2vh; color: #3a8fb7; }
 #steamView .steam-card.installed .steam-state { color: #2e9a4d; }
+
+#steamView .steam-key {
+    align-items: center;
+    gap: 1.5vw;
+    width: min(80vw, 150vh);
+}
+
+#steamView .steam-key input {
+    flex: 1;
+    min-width: 0;
+    font-size: 2.4vh;
+    padding: 0.8vh 1.6vw;
+    border-radius: 6vh;
+    border: 0.4vh solid #7cc8ec;
+    background: #fdfdff;
+    color: #444;
+    outline: none;
+}
+
+#steamView .steam-key .set-pill {
+    font-size: 2.6vh;
+}

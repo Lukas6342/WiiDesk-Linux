@@ -54,6 +54,18 @@
   </mouse>
 
   <applications>
+    <!-- Steam: its main window and the shader pre-caching window stay minimized, so only the game
+         shows. Dialogs (install confirmation, login, friends) have other titles and appear normally. -->
+    <application class="steam" title="Steam">
+      <iconic>yes</iconic>
+    </application>
+    <application class="steam" title="*hader*">
+      <iconic>yes</iconic>
+    </application>
+    <application class="steam" title="*Vulkan*">
+      <iconic>yes</iconic>
+    </application>
+
     <!-- Normal app windows: no title bar or buttons, always maximized, and never resizable.
          Position and size are forced, so even when an app asks to un-maximize, resize or move
          itself (e.g. through its own client-side window buttons), it keeps covering the screen.

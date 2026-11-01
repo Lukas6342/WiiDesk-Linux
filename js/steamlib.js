@@ -56,6 +56,8 @@ function openSteamLibrary() {
         window.electronIpc.invoke('steam-library').then(function (r) {
             if (!r.ok) { steamGames = []; note(r.error || "Couldn't load the library."); return; }
             steamGames = r.games;
+            // Library could not be read: offer the API key as the reliable way
+            el('steamKeyRow').style.display = r.needKey ? 'flex' : 'none';
             note(r.note || (r.games.length ? '' : 'No games found.'));
             render();
         });
@@ -63,6 +65,15 @@ function openSteamLibrary() {
 
     document.addEventListener('DOMContentLoaded', function () {
         el('steamSearch').addEventListener('input', render);
+        el('steamKeySave').addEventListener('click', function () {
+            playSFX('button-select.mp3', userConfig.sfxVol);
+            window.electronIpc.invoke('steam-set-key', el('steamKey').value).then(function (r) {
+                if (!r.ok) { note(r.error || "Couldn't save the key."); return; }
+                el('steamKey').value = '';
+                steamLoad();
+            });
+        });
+        el('steamKey').addEventListener('keydown', function (e) { if (e.key !== 'Escape') e.stopPropagation(); });
         el('steamRefresh').addEventListener('click', function () { playSFX('button-select.mp3', userConfig.sfxVol); steamLoad(); });
         // typing must not trigger menu shortcuts
         el('steamSearch').addEventListener('keydown', function (e) { if (e.key !== 'Escape') e.stopPropagation(); });
