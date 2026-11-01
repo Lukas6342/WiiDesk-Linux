@@ -77,9 +77,10 @@ function decodeXml(s) {
 }
 
 // Steam Web API key (optional, most reliable way to list the library). Free at
-// https://steamcommunity.com/dev/apikey - stored next to WiiDesk's other settings.
+// https://steamcommunity.com/dev/apikey. Plain text file with just the key; the installer can
+// create it, the Steam view can too, or edit it by hand: ~/.config/wiidesk/steam-api-key
 function keyFile() {
-    return path.join(require('electron').app.getPath('userData'), 'steam-api-key.txt');
+    return path.join(process.env.XDG_CONFIG_HOME || path.join(HOME, '.config'), 'wiidesk', 'steam-api-key');
 }
 
 function readKey() {
@@ -193,7 +194,10 @@ function register(ipcMain) {
         key = String(key || '').trim();
         if (key && !/^[0-9A-Fa-f]{32}$/.test(key)) return { ok: false, error: 'That does not look like a Steam API key (32 characters).' };
         try {
-            if (key) fs.writeFileSync(keyFile(), key, { mode: 0o600 }); else fs.rmSync(keyFile(), { force: true });
+            if (key) {
+                fs.mkdirSync(path.dirname(keyFile()), { recursive: true });
+                fs.writeFileSync(keyFile(), key + '\n', { mode: 0o600 });
+            } else fs.rmSync(keyFile(), { force: true });
             return { ok: true };
         } catch (err) { return { ok: false, error: err.message }; }
     });
