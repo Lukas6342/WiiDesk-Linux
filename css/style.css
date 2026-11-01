@@ -2031,3 +2031,65 @@ html.dark-theme .ch-selection .thecontent .buttons a {
     color: #b5b5b5;
     text-align: center;
 }
+
+/* ---- Steam library (Shop channel) ---- */
+#steamView .steam-wrap {
+    position: absolute;
+    top: 15vh; bottom: 20vh; left: 0; right: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.6vh;
+    padding-top: 1.6vh;
+    color: #e8e8e8;
+}
+
+#steamView .steam-tools input {
+    width: min(50vw, 90vh);
+    font-size: 3vh;
+    padding: 0.8vh 2vw;
+    border-radius: 6vh;
+    border: 0.4vh solid #7cc8ec;
+    background: #fdfdff;
+    color: #444;
+    outline: none;
+}
+
+#steamView .set-note {
+    min-height: 3.6vh;
+    font-size: 2.6vh;
+    color: #b5b5b5;
+    text-align: center;
+    padding: 0 4vw;
+}
+
+#steamView .steam-grid {
+    flex: 1;
+    min-height: 0;
+    width: 92vw;
+    overflow-y: auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(34vh, 1fr));
+    grid-auto-rows: max-content;
+    gap: 2.4vh;
+    padding: 1vh 1vw 2vh;
+    align-content: start;
+}
+
+#steamView .steam-card {
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(#fdfdff, #dfe5ef);
+    border: 0.4vh solid #7cc8ec;
+    border-radius: 2vh;
+    overflow: hidden;
+    color: #444;
+    cursor: inherit;
+    transition: transform 150ms;
+}
+
+#steamView .steam-card:hover { transform: scale(1.04); }
+#steamView .steam-card img { width: 100%; aspect-ratio: 460 / 215; object-fit: cover; background: #333; display: block; }
+#steamView .steam-name { padding: 0.8vh 1vh 0; font-size: 2.4vh; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#steamView .steam-state { padding: 0 1vh 0.8vh; font-size: 2.2vh; color: #3a8fb7; }
+#steamView .steam-card.installed .steam-state { color: #2e9a4d; }

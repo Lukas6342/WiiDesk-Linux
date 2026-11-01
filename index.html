@@ -22,6 +22,7 @@
     <script src="js/audio.js"></script>
     <script src="js/channels.js"></script>
     <script src="js/sysettings.js"></script>
+    <script src="js/steamlib.js"></script>
 
     <meta property="og:site_name" content="WiiDesk" />
 	<meta property="og:type" content="website" />
@@ -213,6 +214,23 @@
                 <a class="alt-btn" id="cmExport" onmouseenter="playSFX('button-hover.mp3', userConfig.sfxVol)">Export</a>
                 <a class="alt-btn" id="cmImport" onmouseenter="playSFX('button-hover.mp3', userConfig.sfxVol)">Import</a>
                 <input type="file" id="cmImportFile" accept=".json" style="display:none;" />
+            </div>
+        </div>
+        <div class="settings-content" id="steamView">
+            <div class="topbar">
+                <img src="assets/wii-logo.svg" />
+            </div>
+            <div class="steam-wrap">
+                <h1 class="cm-title">Steam</h1>
+                <div class="steam-tools">
+                    <input type="text" id="steamSearch" placeholder="Search games" autocomplete="off" spellcheck="false" />
+                </div>
+                <div class="set-note" id="steamNote"></div>
+                <div class="steam-grid" id="steamGrid"></div>
+            </div>
+            <div class="bottombar">
+                <a class="alt-btn close" onmouseenter="playSFX('button-hover.mp3', userConfig.sfxVol)" onclick="playSFX('button-cancel.mp3', userConfig.sfxVol)">Back</a>
+                <a class="alt-btn" id="steamRefresh" onmouseenter="playSFX('button-hover.mp3', userConfig.sfxVol)">Refresh</a>
             </div>
         </div>
         <div class="settings-content" id="settingsView">
@@ -440,7 +458,13 @@
 
             $(".letsago").removeAttr('data-start');
             $(".letsago").attr('data-applauncher', targetChannel.isAppLauncher ? 'true' : 'false');
-            if ($(this).data('id') === 'shop') {
+            if ($(this).data('id') === 'shop' && window.electronIpc) {
+                // On the desktop the Shop channel is the Steam library
+                $(".letsago").attr('data-start', 'wiidesk:steam');
+                $(".letsago").attr('data-applauncher', 'false');
+                $(".letsago").removeClass("disabled-btn");
+            }
+            else if ($(this).data('id') === 'shop') {
                 $(".letsago").addClass("disabled-btn");
             }
             else if ($(this).attr("data-href")) {
@@ -455,6 +479,12 @@
         function start() {
             if ($(".letsago").hasClass("disabled-btn")) return;
             playSFX('button-select-big.mp3', userConfig.sfxVol);
+
+            if ($(".letsago").attr("data-start") === 'wiidesk:steam') {
+                menuReturn();
+                setTimeout(function () { if (typeof openSteamLibrary === 'function') openSteamLibrary(); }, 400);
+                return;
+            }
 
             if ($(".letsago").attr("data-start")) {
                 var startUrl = $(".letsago").attr("data-start");
