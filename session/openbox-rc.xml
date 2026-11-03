@@ -65,12 +65,14 @@
     <application class="steam" title="*Vulkan*">
       <iconic>yes</iconic>
     </application>
-    <!-- "Starting <game>" / "Launching <game>" progress windows -->
+    <!-- "Starting <game>" / "Launching <game>" progress windows: Steam needs them to be shown to
+         finish the launch, so they are NOT minimized, only kept below WiiDesk (which shows its own
+         "Starting ..." message meanwhile). -->
     <application class="steam" title="Starting*">
-      <iconic>yes</iconic>
+      <layer>below</layer>
     </application>
     <application class="steam" title="Launching*">
-      <iconic>yes</iconic>
+      <layer>below</layer>
     </application>
 
     <!-- Normal app windows: no title bar or buttons, always maximized, and never resizable.

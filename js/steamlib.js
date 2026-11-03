@@ -43,11 +43,33 @@ function openSteamLibrary() {
 
     function act(g) {
         playSFX('button-select-big.mp3', userConfig.sfxVol);
-        note(g.installed ? 'Starting ' + g.name + '…' : 'Opening Steam to install ' + g.name + '… Confirm the download there.');
+        if (g.installed) showStarting(g.name); else note('Opening Steam to install ' + g.name + '… Confirm the download there.');
         window.electronIpc.invoke('steam-action', g.installed ? 'start' : 'install', g.appid).then(function (r) {
-            if (!r.ok) note("Couldn't reach Steam" + (r.error ? ' (' + r.error + ')' : '') + '.');
+            if (r.ok) return;
+            hideStarting();
+            note("Couldn't reach Steam" + (r.error ? ' (' + r.error + ')' : '') + '.');
         });
     }
+
+    // Wii-style "Starting ..." message while Steam launches the game. It closes by itself as soon as
+    // the game window takes over (WiiDesk loses the focus), or after a timeout as a fallback.
+    var startingTimer = null;
+
+    function hideStarting() {
+        clearTimeout(startingTimer);
+        if ($(".returndialog").hasClass("nobuttons")) $(".returndialog").css("display", "none");
+    }
+
+    function showStarting(name) {
+        openConfirmDialog('Starting ' + name.replace(/[&<>"']/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        }) + '…', null);
+        $(".returndialog").addClass("nobuttons");
+        clearTimeout(startingTimer);
+        startingTimer = setTimeout(hideStarting, 40000);
+    }
+
+    window.electronIpc && window.electronIpc.on('window-blur', hideStarting);
 
     window.steamLoad = function () {
         if (!window.electronIpc) return;
@@ -56,8 +78,6 @@ function openSteamLibrary() {
         window.electronIpc.invoke('steam-library').then(function (r) {
             if (!r.ok) { steamGames = []; note(r.error || "Couldn't load the library."); return; }
             steamGames = r.games;
-            // Library could not be read: offer the API key as the reliable way
-            el('steamKeyRow').style.display = r.needKey ? 'flex' : 'none';
             note(r.note || (r.games.length ? '' : 'No games found.'));
             render();
         });
@@ -65,15 +85,6 @@ function openSteamLibrary() {
 
     document.addEventListener('DOMContentLoaded', function () {
         el('steamSearch').addEventListener('input', render);
-        el('steamKeySave').addEventListener('click', function () {
-            playSFX('button-select.mp3', userConfig.sfxVol);
-            window.electronIpc.invoke('steam-set-key', el('steamKey').value).then(function (r) {
-                if (!r.ok) { note(r.error || "Couldn't save the key."); return; }
-                el('steamKey').value = '';
-                steamLoad();
-            });
-        });
-        el('steamKey').addEventListener('keydown', function (e) { if (e.key !== 'Escape') e.stopPropagation(); });
         el('steamRefresh').addEventListener('click', function () { playSFX('button-select.mp3', userConfig.sfxVol); steamLoad(); });
         // typing must not trigger menu shortcuts
         el('steamSearch').addEventListener('keydown', function (e) { if (e.key !== 'Escape') e.stopPropagation(); });

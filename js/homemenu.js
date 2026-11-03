@@ -9,7 +9,7 @@ function confirmYes() {
 function openConfirmDialog(text, action) {
     document.getElementById('confirmText').innerHTML = text;
     document.getElementById('confirmYes').textContent = 'Yes';
-    $(".returndialog").removeClass("single");
+    $(".returndialog").removeClass("single nobuttons");
     pendingAction = action;
     $(".returndialog").css("display", "flex");
     playSFX('button-select-big.mp3', userConfig.sfxVol);

@@ -77,8 +77,8 @@ function decodeXml(s) {
 }
 
 // Steam Web API key (optional, most reliable way to list the library). Free at
-// https://steamcommunity.com/dev/apikey. Plain text file with just the key; the installer can
-// create it, the Steam view can too, or edit it by hand: ~/.config/wiidesk/steam-api-key
+// https://steamcommunity.com/dev/apikey. Plain text file with just the key, written by the
+// installer or by hand: ~/.config/wiidesk/steam-api-key
 function keyFile() {
     return path.join(process.env.XDG_CONFIG_HOME || path.join(HOME, '.config'), 'wiidesk', 'steam-api-key');
 }
@@ -160,9 +160,8 @@ async function getLibrary() {
         try {
             owned = (await ownedGames(id)).games;
         } catch (e) {
-            result.needKey = true;
-            result.hasKey = !!readKey();
-            result.note = "Couldn't read your library (" + e.message + '). Showing installed games only.';
+            result.note = "Couldn't read your library (" + e.message + '). Showing installed games only.' +
+                (readKey() ? '' : ' Tip: put a Steam API key into ~/.config/wiidesk/steam-api-key.');
         }
     }
     const all = new Map();
@@ -189,18 +188,6 @@ const ACTIONS = { install: 'steam://install/', start: 'steam://rungameid/', unin
 
 function register(ipcMain) {
     ipcMain.handle('steam-library', () => getLibrary().catch((e) => ({ ok: false, error: e.message })));
-    // Saves (or clears, with an empty string) the Steam Web API key
-    ipcMain.handle('steam-set-key', (e, key) => {
-        key = String(key || '').trim();
-        if (key && !/^[0-9A-Fa-f]{32}$/.test(key)) return { ok: false, error: 'That does not look like a Steam API key (32 characters).' };
-        try {
-            if (key) {
-                fs.mkdirSync(path.dirname(keyFile()), { recursive: true });
-                fs.writeFileSync(keyFile(), key + '\n', { mode: 0o600 });
-            } else fs.rmSync(keyFile(), { force: true });
-            return { ok: true };
-        } catch (err) { return { ok: false, error: err.message }; }
-    });
     ipcMain.handle('steam-action', (e, kind, appid) => {
         // only plain numeric app ids reach the command line
         if (!ACTIONS[kind] || !/^\d{1,10}$/.test(String(appid))) return { ok: false, error: 'invalid request' };
