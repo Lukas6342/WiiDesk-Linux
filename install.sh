@@ -48,6 +48,34 @@ update_checkout() {
     git -C /opt/wiidesk pull --ff-only origin "$BRANCH"
 }
 
+# Optional: store a Steam API key so the Steam view in the Shop channel can list the whole library.
+# It goes into the file WiiDesk reads (~/.config/wiidesk/steam-api-key) of the user who ran sudo.
+ask_steam_key() {
+    [ -n "$SUDO_USER" ] || return 0
+    user_home="$(getent passwd "$SUDO_USER" | cut -d: -f6)"
+    [ -n "$user_home" ] || return 0
+    key_file="$user_home/.config/wiidesk/steam-api-key"
+    [ -e "$key_file" ] && return 0
+    echo
+    echo "Optional: a Steam API key lists your whole Steam library in WiiDesk."
+    echo "Get one for free at https://steamcommunity.com/dev/apikey (domain: localhost)."
+    printf "Paste the key here or press Enter to skip: "
+    read -r steam_key
+    [ -n "$steam_key" ] || return 0
+    case "$steam_key" in
+        *[!0-9A-Fa-f]*) echo "That does not look like a Steam API key, skipped."; return 0 ;;
+    esac
+    if [ "${#steam_key}" -ne 32 ]; then
+        echo "A Steam API key has 32 characters, skipped."
+        return 0
+    fi
+    mkdir -p "$(dirname "$key_file")"
+    printf '%s\n' "$steam_key" > "$key_file"
+    chmod 600 "$key_file"
+    chown -R "$SUDO_USER" "$user_home/.config/wiidesk" 2>/dev/null || true
+    echo "Saved."
+}
+
 install_wiidesk() {
 clear
 print_banner
@@ -61,6 +89,7 @@ fi
 echo Installing
 install_electron
 register_session
+ask_steam_key
 echo "Done. Please pick the 'WiiDesk' session in your login manager."
 }
 
