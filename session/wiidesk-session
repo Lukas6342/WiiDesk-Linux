@@ -16,6 +16,34 @@ export XDG_SESSION_DESKTOP=WiiDesk
 # GTK apps like Firefox can draw their own window buttons; ask them not to
 export GTK_CSD=0
 
+# Debug mode: when /opt/wiidesk/enable-debug exists, a second monitor is not switched off but
+# shows a terminal, and Steam's output goes into the session log ($LOG).
+DEBUG=0
+[ -e /opt/wiidesk/enable-debug ] && DEBUG=1
+DEBUG_OUT=""
+
+# Prints the geometry (WxH+X+Y) of an output, e.g. 1280x1024+1920+0
+output_geometry() {
+    xrandr --query | awk -v o="$1" '$1 == o && $2 == "connected" {
+        for (i = 3; i <= NF; i++) if ($i ~ /^[0-9]+x[0-9]+\+[0-9]+\+[0-9]+$/) { print $i; exit }
+    }'
+}
+
+# Opens a terminal titled "WiiDesk Debug" (an Openbox rule keeps it on the second monitor)
+start_debug_terminal() {
+    TITLE="WiiDesk Debug"
+    INNER='echo "WiiDesk debug terminal"; echo "Session log: $HOME/.wiidesk-session.log"; echo; tail -n 25 "$HOME/.wiidesk-session.log"; echo; exec "${SHELL:-/bin/sh}"'
+    if command -v xterm >/dev/null 2>&1; then xterm -T "$TITLE" -e sh -c "$INNER"
+    elif command -v kitty >/dev/null 2>&1; then kitty --title "$TITLE" sh -c "$INNER"
+    elif command -v alacritty >/dev/null 2>&1; then alacritty --title "$TITLE" -e sh -c "$INNER"
+    elif command -v xfce4-terminal >/dev/null 2>&1; then xfce4-terminal --title="$TITLE" -x sh -c "$INNER"
+    elif command -v gnome-terminal >/dev/null 2>&1; then gnome-terminal --title="$TITLE" -- sh -c "$INNER"
+    elif command -v urxvt >/dev/null 2>&1; then urxvt -title "$TITLE" -e sh -c "$INNER"
+    elif command -v st >/dev/null 2>&1; then st -t "$TITLE" -e sh -c "$INNER"
+    else echo "debug: no supported terminal found (install xterm)"
+    fi
+}
+
 # Use only the primary monitor and switch all other screens off:
 # the Wii menu layout breaks as soon as a second monitor is active.
 # If no monitor is marked as primary, the first connected one is used.
@@ -26,18 +54,39 @@ if command -v xrandr >/dev/null 2>&1; then
     if [ -n "$PRIMARY" ]; then
         xrandr --output "$PRIMARY" --auto --primary --pos 0x0
         for OUT in $OUTPUTS; do
-            [ "$OUT" = "$PRIMARY" ] || xrandr --output "$OUT" --off
+            [ "$OUT" = "$PRIMARY" ] && continue
+            if [ "$DEBUG" = 1 ] && [ -z "$DEBUG_OUT" ] && xrandr --output "$OUT" --auto --right-of "$PRIMARY"; then
+                DEBUG_OUT=$OUT   # first extra monitor stays on for the debug terminal
+            else
+                xrandr --output "$OUT" --off
+            fi
         done
     fi
 fi
 
-openbox --config-file /opt/wiidesk/session/openbox-rc.xml &
+# Openbox config. In debug mode a rule with the real position of the second monitor is added at
+# the end of the window rules (when several rules set the same option, the later one wins).
+RC=/opt/wiidesk/session/openbox-rc.xml
+DEBUG_GEOM=""
+[ -n "$DEBUG_OUT" ] && DEBUG_GEOM=$(output_geometry "$DEBUG_OUT")
+if [ -n "$DEBUG_GEOM" ]; then
+    DW=${DEBUG_GEOM%%x*}; REST=${DEBUG_GEOM#*x}
+    DH=${REST%%+*}; REST=${REST#*+}
+    DX=${REST%%+*}; DY=${REST#*+}
+    RC="${XDG_RUNTIME_DIR:-/tmp}/wiidesk-openbox-rc-$(id -u).xml"
+    RULE="<application title=\"WiiDesk Debug\"><decor>no</decor><maximized>no</maximized><position force=\"yes\"><x>$DX</x><y>$DY</y></position><size><width>$DW</width><height>$DH</height></size></application>"
+    sed "s#</applications>#$RULE</applications>#" /opt/wiidesk/session/openbox-rc.xml > "$RC"
+fi
+
+openbox --config-file "$RC" &
 OB=$!
+
+[ -n "$DEBUG_GEOM" ] && start_debug_terminal &
 
 # Start Steam in the background (its windows stay minimized, see openbox-rc.xml), so games start
 # fast later. Opt out: touch ~/.config/wiidesk/no-steam-autostart
 if command -v steam >/dev/null 2>&1 && [ ! -e "${XDG_CONFIG_HOME:-$HOME/.config}/wiidesk/no-steam-autostart" ]; then
-    steam -silent >/dev/null 2>&1 &
+    if [ "$DEBUG" = 1 ]; then steam -silent >>"$LOG" 2>&1 & else steam -silent >/dev/null 2>&1 & fi
 fi
 
 cd /opt/wiidesk || exit 1
